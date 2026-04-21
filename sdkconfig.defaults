@@ -1,0 +1,22 @@
+# Target
+CONFIG_IDF_TARGET="esp32s3"
+
+# TinyUSB — enable USB device and put the net class in NCM mode.
+CONFIG_TINYUSB=y
+CONFIG_TINYUSB_NET_MODE_NCM=y
+CONFIG_TINYUSB_NET_MODE_ECM_RNDIS=n
+CONFIG_TINYUSB_NET_MODE_NONE=n
+CONFIG_TINYUSB_CDC_ENABLED=n
+CONFIG_TINYUSB_MSC_ENABLED=n
+CONFIG_TINYUSB_HID_ENABLED=n
+
+# lwIP — DHCP server support (we serve the host) and a reasonable socket budget.
+CONFIG_LWIP_DHCPS=y
+CONFIG_LWIP_IPV4_NAPT=n
+CONFIG_LWIP_MAX_SOCKETS=10
+
+# mDNS — let QLab resolve qremote.local.
+CONFIG_MDNS_MAX_SERVICES=10
+
+# Log level — bump if noisy.
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y

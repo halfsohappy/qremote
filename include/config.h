@@ -6,13 +6,14 @@
 //   - 172.16.0.0/12 block: far less common on home & show networks than
 //     192.168.x.x (home routers, ETC consoles) or 10.x.x.x (corporate, Dante)
 //   - .42.x is memorable and unlikely to collide with anything
-static constexpr const char* NCM_LOCAL_IP  = "172.30.42.1";   // ESP32-S3 (device)
-static constexpr const char* NCM_GW_IP     = "172.30.42.2";   // host (Mac / QLab)
-static constexpr const char* NCM_NETMASK   = "255.255.255.0";
+#define NCM_DEVICE_IP   "172.30.42.1"   /* ESP32-S3 (this device, DHCP server) */
+#define NCM_HOST_IP     "172.30.42.2"   /* Mac / QLab (DHCP client, single lease) */
+#define NCM_NETMASK     "255.255.255.0"
+
+// mDNS — host can reach the device at <hostname>.local without knowing the IP.
+#define MDNS_HOSTNAME   "qremote"
 
 // OSC / QLab ports — 53000 is QLab's default OSC-in.
-// We listen on 53000 for cues coming from QLab, and send to host:53000
-// to drive QLab (e.g. /cue/1/go). QLab replies come back to our sender port.
-static constexpr uint16_t QLAB_OSC_PORT = 53000;
-static constexpr uint16_t UDP_PORT      = QLAB_OSC_PORT;
-static constexpr size_t   BUF_SIZE      = 1024;   // OSC bundles can exceed 512 B
+#define QLAB_OSC_PORT   53000
+#define UDP_PORT        QLAB_OSC_PORT
+#define BUF_SIZE        1024    /* OSC bundles can exceed 512 B */
