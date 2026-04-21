@@ -16,8 +16,6 @@
 #include "mdns.h"
 #include "tinyusb.h"
 #include "tinyusb_net.h"
-#include "dhcpserver/dhcpserver.h"
-#include "dhcpserver/dhcpserver_options.h"
 
 #include "config.h"
 
@@ -100,22 +98,16 @@ static void setup_netif(void)
     ESP_ERROR_CHECK(esp_read_mac(mac, ESP_MAC_ETH));
     ESP_ERROR_CHECK(esp_netif_set_mac(s_netif, mac));
 
-    // Constrain DHCP to a single-address pool: macOS always gets NCM_HOST_IP.
-    ESP_ERROR_CHECK(esp_netif_dhcps_stop(s_netif));
-    dhcps_lease_t lease = {
-        .enable   = true,
-        .start_ip = { .addr = ipaddr_addr(NCM_HOST_IP) },
-        .end_ip   = { .addr = ipaddr_addr(NCM_HOST_IP) },
-    };
-    ESP_ERROR_CHECK(esp_netif_dhcps_option(s_netif, ESP_NETIF_OP_SET,
-                                           ESP_NETIF_REQUESTED_IP_ADDRESS,
-                                           &lease, sizeof(lease)));
-
+    // Bring netif up; the ESP_NETIF_DHCP_SERVER flag causes esp_netif to start
+    // the DHCP server automatically. Default pool = subnet starting at
+    // device_ip+1, so macOS gets NCM_HOST_IP (172.30.42.2).
     esp_netif_action_start(s_netif, NULL, 0, NULL);
-    ESP_ERROR_CHECK(esp_netif_dhcps_start(s_netif));
+    // Ethernet-style drivers emit ETHERNET_EVENT_CONNECTED; we're a custom
+    // driver with no events, so signal "L2 link live" to esp_netif ourselves.
+    // Without this, the host's NCM driver shows media: none.
+    esp_netif_action_connected(s_netif, NULL, 0, NULL);
 
-    ESP_LOGI(TAG, "netif up: device=%s, host-lease=%s/%s",
-             NCM_DEVICE_IP, NCM_HOST_IP, NCM_NETMASK);
+    ESP_LOGI(TAG, "netif up: device=%s, netmask=%s", NCM_DEVICE_IP, NCM_NETMASK);
 }
 
 static void setup_usb(void)
@@ -140,12 +132,32 @@ static void setup_usb(void)
     ESP_LOGI(TAG, "USB-NCM device started");
 }
 
+// mDNS is a nice-to-have — failures here must not abort the firmware because
+// that would kill the UDP/OSC path too. Log and keep going.
+#define MDNS_TRY(call) do {                                                  \
+    esp_err_t _e = (call);                                                   \
+    if (_e != ESP_OK) {                                                      \
+        ESP_LOGW(TAG, "mdns: %s failed: %s", #call, esp_err_to_name(_e));    \
+    }                                                                        \
+} while (0)
+
 static void setup_mdns(void)
 {
-    ESP_ERROR_CHECK(mdns_init());
-    ESP_ERROR_CHECK(mdns_hostname_set(MDNS_HOSTNAME));
-    ESP_ERROR_CHECK(mdns_instance_name_set("qremote OSC bridge"));
-    ESP_ERROR_CHECK(mdns_service_add(NULL, "_osc", "_udp", QLAB_OSC_PORT, NULL, 0));
+    esp_err_t err = mdns_init();
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "mdns_init failed: %s — skipping mDNS", esp_err_to_name(err));
+        return;
+    }
+    MDNS_TRY(mdns_hostname_set(MDNS_HOSTNAME));
+    MDNS_TRY(mdns_instance_name_set("qremote OSC bridge"));
+
+    // Our USB-NCM netif isn't a default-tracked interface (WiFi STA/AP or
+    // built-in Ethernet), so mdns won't listen on it unless we register it.
+    MDNS_TRY(mdns_register_netif(s_netif));
+    MDNS_TRY(mdns_netif_action(s_netif,
+        MDNS_EVENT_ENABLE_IP4 | MDNS_EVENT_ANNOUNCE_IP4));
+
+    MDNS_TRY(mdns_service_add(NULL, "_osc", "_udp", QLAB_OSC_PORT, NULL, 0));
     ESP_LOGI(TAG, "mDNS: %s.local  _osc._udp:%u", MDNS_HOSTNAME, QLAB_OSC_PORT);
 }
 
@@ -198,7 +210,10 @@ void app_main(void)
 
     setup_netif();
     setup_usb();
-    setup_mdns();
 
+    // Start UDP task before mdns — if mdns has a problem, OSC still works.
     xTaskCreate(udp_task, "udp", 4096, NULL, 5, NULL);
+
+    vTaskDelay(pdMS_TO_TICKS(500));   // let the netif settle before mdns binds
+    setup_mdns();
 }
