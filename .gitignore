@@ -19,3 +19,4 @@ dependencies.lock
 # PlatformIO
 CMakeListsPrivate.txt
 sdkconfig.feathers3
+sdkconfig.waveshare_amoled

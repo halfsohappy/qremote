@@ -5,3 +5,13 @@ dependencies:
     version: "^1.6.0"
   espressif/mdns:
     version: "^1.3.0"
+
+  # Display stack — only compiled into the build when CONFIG_QREMOTE_HAS_DISPLAY
+  # is set (waveshare_amoled env). On feathers3 these still download into
+  # managed_components/ but are not linked (display.c is excluded).
+  lvgl/lvgl:
+    version: "^8.3.0"
+  espressif/esp_lvgl_port:
+    version: "^2.3.0"
+  espressif/esp_lcd_sh8601:
+    version: "^1.0.0"

@@ -1,0 +1,27 @@
+# Waveshare ESP32-S3-Touch-AMOLED-1.64 — deltas over sdkconfig.defaults.
+
+# 16 MB flash (board has 16 MB QSPI). Also pick a partition table that fits.
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
+# Octal PSRAM at 80 MHz — needed for LVGL framebuffers; board ships 8 MB PSRAM.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+
+# Enable display support — pulls in lvgl + esp_lcd_sh8601 codepaths in our
+# main component. Feathers3 env leaves this unset so its build stays lean.
+CONFIG_QREMOTE_HAS_DISPLAY=y
+
+# LVGL — RGB565 panel, default features + a larger title font.
+CONFIG_LV_COLOR_DEPTH_16=y
+CONFIG_LV_USE_LABEL=y
+CONFIG_LV_USE_TEXTAREA=y
+CONFIG_LV_FONT_MONTSERRAT_20=y
+
+# Bump main task stack for LVGL init + UI creation.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192

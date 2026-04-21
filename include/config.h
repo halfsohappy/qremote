@@ -17,3 +17,17 @@
 #define QLAB_OSC_PORT   53000
 #define UDP_PORT        QLAB_OSC_PORT
 #define BUF_SIZE        1024    /* OSC bundles can exceed 512 B */
+
+// ─── Waveshare ESP32-S3-Touch-AMOLED-1.64 display pinout ────────────────────
+// 280×456 SH8601 panel driven over QSPI. Only relevant to the
+// waveshare_amoled env (guarded by CONFIG_QREMOTE_HAS_DISPLAY).
+#define AMOLED_W            280
+#define AMOLED_H            456
+#define AMOLED_PIN_CS       9
+#define AMOLED_PIN_SCLK     10
+#define AMOLED_PIN_D0       11
+#define AMOLED_PIN_D1       12
+#define AMOLED_PIN_D2       13
+#define AMOLED_PIN_D3       14
+#define AMOLED_PIN_RESET    21
+#define AMOLED_SPI_HOST     SPI2_HOST

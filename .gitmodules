@@ -1,0 +1,3 @@
+[submodule "components/microosc/MicroOsc"]
+	path = components/microosc/MicroOsc
+	url = https://github.com/halfsohappy/MicroOsc.git

@@ -1,0 +1,12 @@
+menu "qremote"
+
+config QREMOTE_HAS_DISPLAY
+    bool "Enable AMOLED display output (Waveshare 1.64\" SH8601)"
+    default n
+    help
+        When enabled, pulls in LVGL + esp_lcd_sh8601 and shows network
+        status + incoming OSC messages on the 280x456 AMOLED. Intended
+        for the waveshare_amoled PlatformIO env. The feathers3 env has
+        no display, so this should remain disabled there.
+
+endmenu

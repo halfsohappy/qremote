@@ -25,7 +25,14 @@ CONFIG_LWIP_IPV4_NAPT=n
 CONFIG_LWIP_MAX_SOCKETS=10
 
 # mDNS — let QLab resolve qremote.local.
+# We have no WiFi STA/AP — disable their predefined interface slots so our
+# custom USB-NCM netif can be registered via mdns_register_netif().
+# Without this, mdns_register_netif returns ESP_ERR_NO_MEM (all slots
+# reserved for predefined interfaces we don't use).
 CONFIG_MDNS_MAX_SERVICES=10
+CONFIG_MDNS_MAX_INTERFACES=2
+CONFIG_MDNS_PREDEF_NETIF_STA=n
+CONFIG_MDNS_PREDEF_NETIF_AP=n
 
 # Log level — bump if noisy.
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
