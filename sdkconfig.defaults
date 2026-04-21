@@ -1,14 +1,23 @@
 # Target
 CONFIG_IDF_TARGET="esp32s3"
 
-# TinyUSB — enable USB device and put the net class in NCM mode.
+# TinyUSB — composite device: CDC (serial console) + NCM (USB ethernet).
+# CDC carries ESP_LOG output so we can debug over the same USB-C cable
+# that provides the network link.
 CONFIG_TINYUSB=y
 CONFIG_TINYUSB_NET_MODE_NCM=y
 CONFIG_TINYUSB_NET_MODE_ECM_RNDIS=n
 CONFIG_TINYUSB_NET_MODE_NONE=n
-CONFIG_TINYUSB_CDC_ENABLED=n
+CONFIG_TINYUSB_CDC_ENABLED=y
+CONFIG_TINYUSB_CDC_COUNT=1
 CONFIG_TINYUSB_MSC_ENABLED=n
 CONFIG_TINYUSB_HID_ENABLED=n
+
+# Early boot console goes to UART0 (pre-TinyUSB). Those early messages will
+# be lost since the FeatherS3 has no UART bridge — acceptable. After
+# tinyusb_driver_install runs, esp_tusb_init_console() redirects stdout/
+# stderr to the TinyUSB CDC interface for the rest of the firmware's life.
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
 
 # lwIP — DHCP server support (we serve the host) and a reasonable socket budget.
 CONFIG_LWIP_DHCPS=y

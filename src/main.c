@@ -16,6 +16,8 @@
 #include "mdns.h"
 #include "tinyusb.h"
 #include "tinyusb_net.h"
+#include "tusb_cdc_acm.h"
+#include "tusb_console.h"
 
 #include "config.h"
 
@@ -137,7 +139,24 @@ static void setup_usb(void)
     memcpy(net_cfg.mac_addr, usb_mac, sizeof(usb_mac));
 
     ESP_ERROR_CHECK(tinyusb_net_init(TINYUSB_USBDEV_0, &net_cfg));
-    ESP_LOGI(TAG, "USB-NCM device started");
+
+    // Add a CDC-ACM interface alongside NCM — composite device, one USB cable.
+    const tinyusb_config_cdcacm_t acm_cfg = {
+        .usb_dev          = TINYUSB_USBDEV_0,
+        .cdc_port         = TINYUSB_CDC_ACM_0,
+        .rx_unread_buf_sz = 64,
+        .callback_rx                   = NULL,
+        .callback_rx_wanted_char       = NULL,
+        .callback_line_state_changed   = NULL,
+        .callback_line_coding_changed  = NULL,
+    };
+    ESP_ERROR_CHECK(tusb_cdc_acm_init(&acm_cfg));
+
+    // Redirect stdout/stderr (ESP_LOG) to the CDC interface. After this,
+    // `pio device monitor` on the USB-C port shows live logs.
+    ESP_ERROR_CHECK(esp_tusb_init_console(TINYUSB_CDC_ACM_0));
+
+    ESP_LOGI(TAG, "USB composite up: CDC (logs) + NCM (network)");
 }
 
 // mDNS is a nice-to-have — failures here must not abort the firmware because
