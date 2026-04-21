@@ -63,18 +63,26 @@ static void usb_free_tx_cb(void *buffer, void *ctx) { (void)buffer; (void)ctx; }
 
 static void setup_netif(void)
 {
+    // CRITICAL: leave gw = 0 so the DHCP server does NOT advertise a default
+    // gateway. If we advertised 172.30.42.1 as gateway, macOS would install
+    // a default route through our USB interface, hijacking the user's entire
+    // internet connection (and breaking DNS, since we'd also be the only
+    // nameserver reachable via that route). The device is a point-to-point
+    // link, not a router.
     esp_netif_ip_info_t ip_info = {
         .ip      = { .addr = ipaddr_addr(NCM_DEVICE_IP) },
-        .gw      = { .addr = ipaddr_addr(NCM_DEVICE_IP) },
+        .gw      = { .addr = 0 },
         .netmask = { .addr = ipaddr_addr(NCM_NETMASK)   },
     };
 
+    // route_prio = 0: never compete with WiFi/Ethernet for the default route
+    // on the device side either.
     esp_netif_inherent_config_t base_cfg = {
         .flags      = ESP_NETIF_DHCP_SERVER | ESP_NETIF_FLAG_AUTOUP,
         .ip_info    = &ip_info,
         .if_key     = "USB_NCM",
         .if_desc    = "usbnet",
-        .route_prio = 10,
+        .route_prio = 0,
     };
 
     esp_netif_driver_ifconfig_t driver_cfg = {
