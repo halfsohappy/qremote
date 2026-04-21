@@ -111,7 +111,7 @@ static void setup_netif(void)
                                            ESP_NETIF_REQUESTED_IP_ADDRESS,
                                            &lease, sizeof(lease)));
 
-    ESP_ERROR_CHECK(esp_netif_action_start(s_netif, NULL, 0, NULL));
+    esp_netif_action_start(s_netif, NULL, 0, NULL);
     ESP_ERROR_CHECK(esp_netif_dhcps_start(s_netif));
 
     ESP_LOGI(TAG, "netif up: device=%s, host-lease=%s/%s",
