@@ -11,11 +11,14 @@ extern "C" {
 #endif
 
 #define OSC_SUMMARY_MAX 160
+#define OSC_MAX_INT_ARGS 8
 
 typedef struct {
     const char *address;     // pointer into caller's buffer; valid during callback
     const char *typetags;    // ditto
     char summary[OSC_SUMMARY_MAX];  // pretty-printed args, e.g. `"hello" 42 1.5`
+    int32_t ints[OSC_MAX_INT_ARGS];  // values of 'i'-tagged args, in order (args past capacity are dropped)
+    uint8_t nints;
 } osc_parsed_t;
 
 typedef void (*osc_handler_t)(const osc_parsed_t *msg, void *user);
