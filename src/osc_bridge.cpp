@@ -37,10 +37,13 @@ struct Ctx {
 // the trampoline. Parse is synchronous and single-threaded per call.
 thread_local Ctx g_ctx = { nullptr, nullptr };
 
-void format_args(MicroOscMessage &msg, char *out, size_t out_sz) {
+void format_args(MicroOscMessage &msg, osc_parsed_t *parsed) {
+    char *out = parsed->summary;
+    size_t out_sz = sizeof(parsed->summary);
     const char *tags = msg.getTypeTags();
     size_t off = 0;
     out[0] = '\0';
+    parsed->nints = 0;
     if (!tags) return;
 
     for (const char *t = tags; *t && off + 1 < out_sz; ++t) {
@@ -48,9 +51,12 @@ void format_args(MicroOscMessage &msg, char *out, size_t out_sz) {
         if (off > 0) { out[off++] = ' '; out[off] = '\0'; if (off + 1 >= out_sz) break; }
 
         switch (*t) {
-        case 'i':
-            n = snprintf(out + off, out_sz - off, "%ld", (long)msg.nextAsInt());
+        case 'i': {
+            int32_t v = msg.nextAsInt();
+            if (parsed->nints < OSC_MAX_INT_ARGS) parsed->ints[parsed->nints++] = v;
+            n = snprintf(out + off, out_sz - off, "%ld", (long)v);
             break;
+        }
         case 'f':
             n = snprintf(out + off, out_sz - off, "%g", (double)msg.nextAsFloat());
             break;
@@ -93,7 +99,7 @@ void trampoline(MicroOscMessage &msg) {
     osc_parsed_t parsed;
     parsed.address  = msg.getOscAddress();
     parsed.typetags = msg.getTypeTags();
-    format_args(msg, parsed.summary, sizeof(parsed.summary));
+    format_args(msg, &parsed);
     g_ctx.cb(&parsed, g_ctx.user);
 }
 

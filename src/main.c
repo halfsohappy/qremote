@@ -22,6 +22,8 @@
 #include "config.h"
 #include "display.h"
 #include "osc_bridge.h"
+#include "espnow_link.h"
+#include "light_bridge.h"
 
 static const char *TAG = "qremote";
 
@@ -174,6 +176,7 @@ static void on_osc(const osc_parsed_t *m, void *user)
              m->typetags ? m->typetags : "",
              m->summary);
     display_log_osc(m->address, m->typetags, m->summary);
+    light_bridge_handle(m);
 }
 
 static void udp_task(void *arg)
@@ -225,6 +228,8 @@ void app_main(void)
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    espnow_link_init();
 
     setup_netif();
     setup_usb();

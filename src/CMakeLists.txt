@@ -1,6 +1,6 @@
-set(qremote_srcs "main.c" "display.c" "osc_bridge.cpp")
+set(qremote_srcs "main.c" "display.c" "osc_bridge.cpp" "espnow_link.c" "light_bridge.c")
 
-set(qremote_priv_reqs esp_tinyusb mdns microosc)
+set(qremote_priv_reqs esp_tinyusb mdns microosc esp_wifi nvs_flash)
 if(CONFIG_QREMOTE_HAS_DISPLAY)
     # Only link the display stack when the AMOLED env requests it. The deps
     # are listed unconditionally in idf_component.yml so they stay downloaded,
@@ -15,7 +15,7 @@ endif()
 
 idf_component_register(
     SRCS ${qremote_srcs}
-    INCLUDE_DIRS "." "../include"
+    INCLUDE_DIRS "." "../include" "../shared"
     REQUIRES esp_netif esp_event lwip
     PRIV_REQUIRES ${qremote_priv_reqs}
 )
